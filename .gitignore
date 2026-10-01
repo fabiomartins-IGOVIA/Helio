@@ -1,0 +1,18 @@
+# Ambiente virtual e caches do Python
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Credenciais — NUNCA subir
+.env
+
+# Dados — não versionar o conteúdo, só manter a estrutura de pastas
+data/raw/*
+data/interim/*
+data/processed/*
+!data/**/.gitkeep
+
+# Sistema / editor
+.DS_Store
+.vscode/
