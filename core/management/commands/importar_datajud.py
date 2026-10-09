@@ -33,6 +33,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            "limite_linhas",
+            nargs="?",
+            type=int,
+            default=None,
+            help="Quantidade máxima de linhas a importar. Sem valor, importa tudo.",
+        )
+        parser.add_argument(
             "--arquivo",
             type=Path,
             default=Path(settings.BASE_DIR) / "data" / "processed" / "datajud" / "tabela_principal_helios.parquet",
@@ -58,11 +65,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         arquivo = options["arquivo"].expanduser().resolve()
         batch_size = options["batch_size"]
+        limite_linhas = options["limite_linhas"]
 
         if not arquivo.is_file():
             raise CommandError(f"Arquivo Parquet não encontrado: {arquivo}")
         if batch_size <= 0:
             raise CommandError("--batch-size deve ser maior que zero.")
+        if limite_linhas is not None and limite_linhas <= 0:
+            raise CommandError("limite_linhas deve ser maior que zero.")
 
         try:
             import pyarrow.parquet as pq
@@ -82,6 +92,8 @@ class Command(BaseCommand):
         self.stdout.write(f"Arquivo: {arquivo}")
         self.stdout.write(f"Linhas declaradas: {parquet.metadata.num_rows:,}".replace(",", "."))
         self.stdout.write(f"Lotes: {parquet.metadata.num_row_groups}")
+        if limite_linhas is not None:
+            self.stdout.write(f"Limite solicitado: {limite_linhas:,}".replace(",", "."))
 
         if options["dry_run"]:
             self.stdout.write(self.style.SUCCESS("Validação concluída; nada foi gravado."))
@@ -92,12 +104,24 @@ class Command(BaseCommand):
             self.stdout.write(f"Registros removidos antes da carga: {apagados:,}".replace(",", "."))
 
         total_importado = 0
+        tamanho_leitura = (
+            min(batch_size, limite_linhas)
+            if limite_linhas is not None
+            else batch_size
+        )
         for batch in parquet.iter_batches(
-            batch_size=batch_size,
+            batch_size=tamanho_leitura,
             columns=sorted(COLUNAS_OBRIGATORIAS),
         ):
+            linhas = batch.to_pylist()
+            if limite_linhas is not None:
+                restantes = limite_linhas - total_importado
+                if restantes <= 0:
+                    break
+                linhas = linhas[:restantes]
+
             objetos = []
-            for row in batch.to_pylist():
+            for row in linhas:
                 try:
                     ano = int(row["ano"])
                 except (TypeError, ValueError) as exc:
@@ -127,6 +151,9 @@ class Command(BaseCommand):
                 self.stdout.write(
                     f"Importados: {total_importado:,}".replace(",", ".")
                 )
+
+            if limite_linhas is not None and total_importado >= limite_linhas:
+                break
 
         self.stdout.write(
             self.style.SUCCESS(

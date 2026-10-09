@@ -1,0 +1,267 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#14213d">
+    <title>Hélio · Visão geral</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+      :root {
+        --helio-ink: #172b4d;
+        --helio-blue: #206bc4;
+        --helio-cyan: #0ca6c7;
+        --helio-bg: #f5f7fb;
+        --helio-border: #e6eaf0;
+        --sidebar-width: 272px;
+      }
+
+      * { box-sizing: border-box; }
+      body { background: var(--helio-bg); color: #26344d; }
+      .app-shell { min-height: 100vh; }
+      .app-sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 1000;
+        width: var(--sidebar-width);
+        padding: 24px 16px;
+        color: #dbe7fb;
+        background: linear-gradient(180deg, #14213d 0%, #182d50 55%, #102039 100%);
+        box-shadow: 8px 0 30px rgba(19, 39, 69, .08);
+      }
+      .app-main { min-width: 0; margin-left: var(--sidebar-width); }
+      .brand { display: flex; align-items: center; gap: 12px; padding: 0 12px 28px; color: #fff; text-decoration: none; }
+      .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #48c6ef, #206bc4); color: #fff; font-size: 19px; font-weight: 800; box-shadow: 0 8px 18px rgba(32, 107, 196, .35); }
+      .brand-name { font-size: 1.08rem; font-weight: 750; letter-spacing: .08em; }
+      .brand-subtitle { margin-top: 1px; color: #92a8ca; font-size: .7rem; letter-spacing: .04em; }
+      .nav-section { margin: 18px 12px 8px; color: #7790b6; font-size: .67rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+      .side-nav { display: grid; gap: 4px; }
+      .side-link { display: flex; align-items: center; gap: 11px; min-height: 42px; padding: 10px 12px; border-radius: 10px; color: #b8c8e2; font-size: .9rem; text-decoration: none; transition: background .18s, color .18s, transform .18s; }
+      .side-link:hover { color: #fff; background: rgba(255,255,255,.08); transform: translateX(2px); }
+      .side-link.active { color: #fff; background: linear-gradient(90deg, rgba(61, 147, 232, .35), rgba(61, 147, 232, .12)); box-shadow: inset 3px 0 0 #54c7ed; }
+      .side-link.disabled { color: #7185a5; cursor: not-allowed; opacity: .72; }
+      .side-link.disabled:hover { transform: none; background: transparent; }
+      .side-icon { display: grid; place-items: center; width: 20px; color: #8bcff0; font-size: 1rem; }
+      .side-link.disabled .side-icon { color: #7084a4; }
+      .side-badge { margin-left: auto; border: 1px solid rgba(150, 177, 216, .35); border-radius: 20px; padding: 2px 7px; color: #91a7c8; font-size: .62rem; }
+      .sidebar-footer { position: absolute; right: 16px; bottom: 18px; left: 16px; padding: 13px 14px; border: 1px solid rgba(157, 186, 224, .16); border-radius: 12px; background: rgba(255,255,255,.04); color: #89a0c1; font-size: .72rem; line-height: 1.45; }
+      .sidebar-footer strong { display: block; margin-bottom: 3px; color: #dce8fa; font-size: .76rem; }
+      .topbar { display: flex; align-items: center; justify-content: space-between; min-height: 74px; padding: 0 38px; border-bottom: 1px solid var(--helio-border); background: rgba(255,255,255,.84); backdrop-filter: blur(8px); }
+      .breadcrumb-label { color: #8b98aa; font-size: .77rem; }
+      .top-status { display: inline-flex; align-items: center; gap: 8px; color: #66758a; font-size: .78rem; }
+      .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #2fb344; box-shadow: 0 0 0 4px rgba(47, 179, 68, .12); }
+      .page-content { max-width: 1500px; margin: 0 auto; padding: 34px 38px 50px; }
+      .intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+      .eyebrow { margin-bottom: 8px; color: var(--helio-blue); font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+      .intro h1 { margin: 0; color: var(--helio-ink); font-size: clamp(1.65rem, 3vw, 2.3rem); font-weight: 750; letter-spacing: -.035em; }
+      .intro p { max-width: 690px; margin: 8px 0 0; color: #758399; font-size: .93rem; }
+      .data-status { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; border: 1px solid #dce6f3; border-radius: 999px; padding: 9px 13px; background: #fff; color: #49617f; font-size: .76rem; box-shadow: 0 3px 14px rgba(24, 44, 76, .04); }
+      .data-status span { width: 7px; height: 7px; border-radius: 50%; background: #2fb344; }
+      .metric-card { position: relative; overflow: hidden; min-height: 142px; border: 1px solid var(--helio-border); border-radius: 14px; box-shadow: 0 5px 18px rgba(26, 47, 79, .035); }
+      .metric-card::after { position: absolute; right: -23px; bottom: -38px; width: 112px; height: 112px; border: 18px solid rgba(32,107,196,.06); border-radius: 50%; content: ""; }
+      .metric-icon { display: grid; place-items: center; width: 37px; height: 37px; border-radius: 10px; background: #eaf3ff; color: var(--helio-blue); font-size: 1.02rem; }
+      .metric-label { margin-top: 15px; color: #8290a5; font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+      .metric-value { margin-top: 3px; color: var(--helio-ink); font-size: 1.68rem; font-weight: 760; letter-spacing: -.035em; }
+      .metric-hint { margin-top: 4px; color: #9aa7b8; font-size: .73rem; }
+      .panel { height: 100%; border: 1px solid var(--helio-border); border-radius: 14px; box-shadow: 0 5px 18px rgba(26, 47, 79, .035); }
+      .panel .card-header { min-height: 65px; border-bottom: 1px solid #edf0f4; }
+      .panel .card-title { color: var(--helio-ink); font-size: .95rem; font-weight: 730; }
+      .panel-subtitle { margin-top: 3px; color: #97a3b2; font-size: .72rem; }
+      .chart-wrap { position: relative; height: 245px; }
+      .chart-wrap.chart-short { height: 215px; }
+      .rank-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; margin-bottom: 16px; }
+      .rank-item:last-child { margin-bottom: 0; }
+      .rank-name { overflow: hidden; color: #4c5d74; font-size: .79rem; text-overflow: ellipsis; white-space: nowrap; }
+      .rank-value { color: #718198; font-size: .74rem; font-variant-numeric: tabular-nums; }
+      .rank-track { grid-column: 1 / -1; height: 6px; overflow: hidden; margin-top: -9px; border-radius: 999px; background: #edf2f8; }
+      .rank-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #206bc4, #45c3e5); }
+      .empty-state { display: grid; place-items: center; height: 185px; border: 1px dashed #d5deea; border-radius: 10px; color: #98a5b6; font-size: .83rem; }
+      .source-card { display: flex; align-items: center; gap: 13px; padding: 15px 16px; border: 1px solid var(--helio-border); border-radius: 12px; background: #fff; }
+      .source-logo { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 9px; background: #eaf3ff; color: var(--helio-blue); font-size: .72rem; font-weight: 800; }
+      .source-card strong { display: block; color: var(--helio-ink); font-size: .82rem; }
+      .source-card span { color: #8c9aae; font-size: .71rem; }
+      .footer { margin-top: 42px; padding-top: 18px; border-top: 1px solid var(--helio-border); color: #a1adbb; font-size: .72rem; }
+      @media (max-width: 991px) {
+        .app-sidebar { position: relative; width: 100%; min-height: auto; padding: 14px 16px; }
+        .app-main { margin-left: 0; }
+        .sidebar-footer { display: none; }
+        .nav-section { margin-top: 10px; }
+        .side-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .topbar { padding: 0 22px; }
+        .page-content { padding: 26px 22px 40px; }
+      }
+      @media (max-width: 575px) {
+        .topbar { min-height: 60px; }
+        .top-status { display: none; }
+        .intro { display: block; }
+        .data-status { margin-top: 16px; }
+        .side-nav { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    {{ anos|json_script:"anos-data" }}
+    {{ graus|json_script:"graus-data" }}
+    {{ municipios|json_script:"municipios-data" }}
+
+    <div class="app-shell">
+      <aside class="app-sidebar">
+        <a class="brand" href="/admin/">
+          <span class="brand-mark">H</span>
+          <span><span class="brand-name d-block">HÉLIO</span><span class="brand-subtitle">INTELIGÊNCIA JUDICIAL</span></span>
+        </a>
+
+        <div class="nav-section">Visão geral</div>
+        <nav class="side-nav">
+          <a class="side-link active" href="/admin/"><span class="side-icon">⌂</span><span>Dashboard</span></a>
+        </nav>
+
+        <div class="nav-section">Modelos e previsões</div>
+        <nav class="side-nav">
+          <span class="side-link disabled"><span class="side-icon">✦</span><span>Modelos estatísticos</span><span class="side-badge">Em breve</span></span>
+          <span class="side-link disabled"><span class="side-icon">⌁</span><span>Previsões</span><span class="side-badge">Em breve</span></span>
+        </nav>
+
+        <div class="nav-section">Fontes de dados</div>
+        <nav class="side-nav">
+          <a class="side-link" href="/api/datajud-registros/" target="_blank" rel="noopener"><span class="side-icon">▤</span><span>Datajud</span></a>
+          <span class="side-link disabled"><span class="side-icon">◎</span><span>IBGE</span><span class="side-badge">Em breve</span></span>
+        </nav>
+
+        <div class="nav-section">Recursos</div>
+        <nav class="side-nav">
+          <a class="side-link" href="/api/docs/" target="_blank" rel="noopener"><span class="side-icon">⌘</span><span>Documentação da API</span></a>
+        </nav>
+
+        <div class="sidebar-footer"><strong>Ambiente de análise</strong>Dados públicos e agregados para apoiar a inteligência do Judiciário.</div>
+      </aside>
+
+      <div class="app-main">
+        <header class="topbar">
+          <div><div class="breadcrumb-label">Hélio / Visão geral</div></div>
+          <div class="top-status"><span class="status-dot"></span> Sistema operacional</div>
+        </header>
+
+        <main class="page-content">
+          <section class="intro">
+            <div>
+              <div class="eyebrow">Centro de inteligência</div>
+              <h1>Visão geral dos dados</h1>
+              <p>Acompanhe a cobertura atual do Datajud. Os modelos estatísticos serão disponibilizados nesta mesma aplicação em uma próxima etapa.</p>
+            </div>
+            <div class="data-status"><span></span> Datajud atualizado via notebook</div>
+          </section>
+
+          <div class="row row-cards mb-4">
+            <div class="col-sm-6 col-xl-3">
+              <div class="card metric-card"><div class="card-body"><div class="metric-icon">▦</div><div class="metric-label">Registros Datajud</div><div class="metric-value">{{ total_registros }}</div><div class="metric-hint">Linhas disponíveis no banco</div></div></div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+              <div class="card metric-card"><div class="card-body"><div class="metric-icon">⌖</div><div class="metric-label">Municípios</div><div class="metric-value">{{ total_municipios }}</div><div class="metric-hint">Localidades identificadas</div></div></div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+              <div class="card metric-card"><div class="card-body"><div class="metric-icon">▥</div><div class="metric-label">Órgãos</div><div class="metric-value">{{ total_orgaos }}</div><div class="metric-hint">Órgãos com registros</div></div></div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+              <div class="card metric-card"><div class="card-body"><div class="metric-icon">◈</div><div class="metric-label">Classes processuais</div><div class="metric-value">{{ total_classes }}</div><div class="metric-hint">Categorias encontradas</div></div></div>
+            </div>
+          </div>
+
+          <div class="row row-cards mb-4">
+            <div class="col-lg-8">
+              <div class="card panel">
+                <div class="card-header"><div><h3 class="card-title mb-0">Evolução dos registros</h3><div class="panel-subtitle">Distribuição anual da base carregada</div></div></div>
+                <div class="card-body"><div class="chart-wrap"><canvas id="yearChart"></canvas></div></div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="card panel">
+                <div class="card-header"><div><h3 class="card-title mb-0">Registros por grau</h3><div class="panel-subtitle">Composição da base Datajud</div></div></div>
+                <div class="card-body"><div class="chart-wrap chart-short"><canvas id="degreeChart"></canvas></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row row-cards mb-4">
+            <div class="col-lg-7">
+              <div class="card panel">
+                <div class="card-header"><div><h3 class="card-title mb-0">Municípios com maior volume</h3><div class="panel-subtitle">Top 10 por quantidade de registros</div></div></div>
+                <div class="card-body">
+                  {% if municipios %}
+                    {% for item in municipios %}
+                    <div class="rank-item"><div class="rank-name" title="{{ item.municipio }}">{{ item.municipio }}</div><div class="rank-value">{{ item.total }}</div><div class="rank-track"><div class="rank-fill" style="width: {{ item.percentual_css }}%"></div></div></div>
+                    {% endfor %}
+                  {% else %}<div class="empty-state">Nenhum registro carregado.</div>{% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <div class="card panel">
+                <div class="card-header"><div><h3 class="card-title mb-0">Classes mais frequentes</h3><div class="panel-subtitle">Categorias predominantes na base</div></div></div>
+                <div class="card-body">
+                  {% if classes %}
+                    {% for item in classes %}
+                    <div class="rank-item"><div class="rank-name" title="{{ item.nome_classe }}">{{ item.nome_classe|default:"Não informado" }}</div><div class="rank-value">{{ item.total }}</div><div class="rank-track"><div class="rank-fill" style="width: {{ item.percentual_css }}%; background: linear-gradient(90deg, #0ca6c7, #7b61ff)"></div></div></div>
+                    {% endfor %}
+                  {% else %}<div class="empty-state">Nenhum registro carregado.</div>{% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row row-cards">
+            <div class="col-md-6"><div class="source-card"><div class="source-logo">CNJ</div><div><strong>Datajud / CNJ</strong><span>Fonte conectada · registros disponíveis</span></div><span class="ms-auto badge bg-green-lt">Ativo</span></div></div>
+            <div class="col-md-6"><div class="source-card"><div class="source-logo">IBGE</div><div><strong>IBGE</strong><span>Indicadores socioeconômicos · modelo em definição</span></div><span class="ms-auto badge bg-secondary-lt">Planejado</span></div></div>
+          </div>
+
+          <footer class="footer d-flex justify-content-between gap-3 flex-wrap"><span>Projeto Hélio · Núcleo de T.I. do EDEP — TJBA</span><span>Base de apoio à previsão de demanda judicial</span></footer>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      const colors = ['#206bc4', '#0ca6c7', '#7b61ff', '#f59f00', '#d63939', '#2fb344'];
+      const anos = JSON.parse(document.getElementById('anos-data').textContent);
+      const graus = JSON.parse(document.getElementById('graus-data').textContent);
+
+      Chart.defaults.font.family = 'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+      Chart.defaults.color = '#8390a3';
+      Chart.defaults.borderColor = '#edf0f4';
+
+      new Chart(document.getElementById('yearChart'), {
+        type: 'bar',
+        data: {
+          labels: anos.map(item => item.ano),
+          datasets: [{
+            label: 'Registros',
+            data: anos.map(item => item.total),
+            backgroundColor: '#206bc4',
+            borderRadius: 7,
+            borderSkipped: false,
+            barPercentage: .56,
+          }]
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { displayColors: false } },
+          scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+
+      new Chart(document.getElementById('degreeChart'), {
+        type: 'doughnut',
+        data: {
+          labels: graus.map(item => item.grau),
+          datasets: [{ data: graus.map(item => item.total), backgroundColor: colors, borderWidth: 3, borderColor: '#fff', hoverOffset: 5 }]
+        },
+        options: {
+          maintainAspectRatio: false,
+          cutout: '68%',
+          plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16, boxWidth: 8 } } }
+        }
+      });
+    </script>
+  </body>
+</html>

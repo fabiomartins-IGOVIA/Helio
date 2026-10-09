@@ -101,6 +101,46 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+### Banco PostgreSQL do Hélio
+
+O desenvolvimento local usa SQLite por padrão. Para conectar ao banco real, o
+túnel SSH deve permanecer aberto em um terminal separado:
+
+```powershell
+ssh -N -L 5433:127.0.0.1:5432 tunel_seu_usuario@server.igovia.com.br
+```
+
+Em outro terminal, crie o arquivo `.env` a partir do `.env.example` e use:
+
+```dotenv
+DB_ENGINE=postgresql
+DB_NAME=helio
+DB_HOST=127.0.0.1
+DB_PORT=5433
+DB_USER=seu_usuario
+DB_PASSWORD=sua_senha
+```
+
+O Django então acessará `localhost:5433`, que é encaminhado pelo túnel para o
+PostgreSQL do servidor. Teste a conexão com:
+
+```powershell
+python manage.py migrate --plan
+```
+
+Depois de confirmar a conexão, as migrações podem ser aplicadas no banco real:
+
+```powershell
+python manage.py migrate
+```
+
+Com o túnel aberto e o `.env` configurado, o importador do Datajud também
+gravará diretamente no PostgreSQL:
+
+```powershell
+python manage.py importar_datajud 500000
+```
+
 Principais endpoints:
 
 - `GET /api/health/` — verifica a aplicação e a conexão com o banco.
@@ -108,7 +148,8 @@ Principais endpoints:
 - `/api/docs/` — documentação interativa Swagger UI.
 - `/api/schema/` — schema OpenAPI em JSON.
 - `/api/redoc/` — documentação ReDoc.
-- `/admin/` — administração do Django.
+- `/admin/` — painel público com indicadores agregados.
+- `/django-admin/` — administração técnica do Django, protegida por login.
 
 O modelo atual contém `DatajudRegistro`, que representa a camada bruta do Datajud.
 O modelo `IBGE` está mantido como placeholder abstrato, sem campos, até que os
@@ -137,6 +178,14 @@ Importar os registros em lotes:
 ```bash
 python manage.py importar_datajud
 ```
+
+Importar somente uma quantidade específica de linhas:
+
+```bash
+python manage.py importar_datajud 500000
+```
+
+Sem esse argumento, o comando importa todas as linhas do arquivo.
 
 Também é possível informar outro caminho:
 
