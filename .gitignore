@@ -1,5 +1,7 @@
 # Ambiente virtual e caches do Python
 venv/
+.venv/
+.venv-temp/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
@@ -12,6 +14,7 @@ data/raw/*
 data/interim/*
 data/processed/*
 !data/**/.gitkeep
+*.sqlite3
 
 # Sistema / editor
 .DS_Store

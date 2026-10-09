@@ -32,6 +32,9 @@ O Hélio investiga como indicadores demográficos e socioeconômicos ajudam a pr
 helio/
 ├── README.md              # este arquivo
 ├── requirements.txt       # bibliotecas Python do projeto
+├── manage.py               # comandos administrativos do Django
+├── helio_backend/          # configuração do projeto Django
+├── core/                   # aplicação Django: modelos, API e migrações
 ├── .gitignore             # o que NÃO sobe para o repositório
 ├── .env.example           # modelo das variáveis de ambiente (ex.: chave do Datajud)
 ├── docs/                  # documentação, dicionário de dados, decisões
@@ -82,6 +85,76 @@ Pré-requisitos: Git, Python 3 e VS Code instalados.
    pip install -r requirements.txt
 ```
    > O `requirements.txt` cresce conforme o projeto adota novas bibliotecas.
+
+## Backend Django
+
+O backend inicial está na raiz do projeto e usa SQLite por padrão para desenvolvimento.
+Ele também aceita PostgreSQL por meio das variáveis de ambiente do `.env.example`.
+
+Para iniciar:
+
+```bash
+python -m venv venv
+venv\\Scripts\\activate       # Windows PowerShell
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+Principais endpoints:
+
+- `GET /api/health/` — verifica a aplicação e a conexão com o banco.
+- `/api/datajud-registros/` — CRUD público dos registros do Datajud.
+- `/api/docs/` — documentação interativa Swagger UI.
+- `/api/schema/` — schema OpenAPI em JSON.
+- `/api/redoc/` — documentação ReDoc.
+- `/admin/` — administração do Django.
+
+O modelo atual contém `DatajudRegistro`, que representa a camada bruta do Datajud.
+O modelo `IBGE` está mantido como placeholder abstrato, sem campos, até que os
+indicadores do IBGE sejam definidos. A coleta das duas APIs será feita pelos
+notebooks, sem uma tabela de controle de cargas no backend.
+
+### Carga do Parquet do Datajud
+
+Coloque o arquivo produzido pelo notebook em:
+
+```text
+data/processed/datajud/tabela_principal_helios.parquet
+```
+
+Os dados não são versionados pelo Git. Os comandos de carga ficam em
+`core/management/commands/` e usam a configuração de banco do Django.
+
+Validar o arquivo sem gravar:
+
+```bash
+python manage.py importar_datajud --dry-run
+```
+
+Importar os registros em lotes:
+
+```bash
+python manage.py importar_datajud
+```
+
+Também é possível informar outro caminho:
+
+```bash
+python manage.py importar_datajud --arquivo "C:/caminho/arquivo.parquet"
+```
+
+Para substituir completamente a carga atual durante a importação:
+
+```bash
+python manage.py importar_datajud --limpar-antes
+```
+
+Para limpar o banco separadamente, é necessário confirmar explicitamente:
+
+```bash
+python manage.py limpar_datajud --confirmar
+```
 
 ## Fluxo de trabalho (colaboração)
 
