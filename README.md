@@ -158,11 +158,15 @@ notebooks, sem uma tabela de controle de cargas no backend.
 
 ### Carga do Parquet do Datajud
 
-Coloque o arquivo produzido pelo notebook em:
+O notebook histórico produz este arquivo, sem sobrescrever o Parquet atual:
 
 ```text
-data/processed/datajud/tabela_principal_helios.parquet
+data/processed/datajud/tabela_principal_helios_2000_2024.parquet
 ```
+
+O arquivo `data/processed/datajud/tabela_principal_helios.parquet` já existente
+contém os dados de 2025 e 2026. Sem `--arquivo`, o comando importa os dois
+arquivos em ordem cronológica.
 
 Os dados não são versionados pelo Git. Os comandos de carga ficam em
 `core/management/commands/` e usam a configuração de banco do Django.
@@ -185,12 +189,12 @@ Importar somente uma quantidade específica de linhas:
 python manage.py importar_datajud 500000
 ```
 
-Sem esse argumento, o comando importa todas as linhas do arquivo.
+Sem esse argumento, o comando importa todas as linhas dos dois arquivos padrão.
 
-Também é possível informar outro caminho:
+Também é possível informar um ou mais caminhos manualmente, repetindo `--arquivo`:
 
 ```bash
-python manage.py importar_datajud --arquivo "C:/caminho/arquivo.parquet"
+python manage.py importar_datajud --arquivo "C:/caminho/arquivo_1.parquet" --arquivo "C:/caminho/arquivo_2.parquet"
 ```
 
 Para substituir completamente a carga atual durante a importação:

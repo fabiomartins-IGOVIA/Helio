@@ -12,7 +12,10 @@ class DatajudRegistro(models.Model):
     ano = models.PositiveSmallIntegerField()
     grau = models.CharField(max_length=2)
     processo = models.CharField(max_length=25, db_index=True)
-    id_municipio = models.CharField(max_length=4)
+    id_municipio = models.CharField(
+        max_length=7,
+        help_text="Código do município no padrão IBGE, com até 7 dígitos.",
+    )
     municipio = models.CharField(max_length=27)
     codigo_classe = models.TextField(
         help_text="Lista de códigos serializada, por exemplo: [198,460].",

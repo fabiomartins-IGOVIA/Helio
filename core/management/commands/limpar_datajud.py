@@ -1,7 +1,12 @@
+import logging
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
 
 from core.models import DatajudRegistro
+
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -16,6 +21,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not options["confirmar"]:
+            logger.error("Tentativa de limpeza sem a confirmação obrigatória")
             raise CommandError(
                 "A operação é destrutiva. Execute novamente com --confirmar."
             )
@@ -23,14 +29,20 @@ class Command(BaseCommand):
         tabela = DatajudRegistro._meta.db_table
         quoted_table = connection.ops.quote_name(tabela)
 
-        with transaction.atomic():
-            if connection.vendor == "postgresql":
-                with connection.cursor() as cursor:
-                    cursor.execute(f"TRUNCATE TABLE {quoted_table} RESTART IDENTITY")
-                removidos = "todos"
-            else:
-                removidos, _ = DatajudRegistro.objects.all().delete()
+        logger.warning("Iniciando limpeza da tabela %s", tabela)
+        try:
+            with transaction.atomic():
+                if connection.vendor == "postgresql":
+                    with connection.cursor() as cursor:
+                        cursor.execute(f"TRUNCATE TABLE {quoted_table} RESTART IDENTITY")
+                    removidos = "todos"
+                else:
+                    removidos, _ = DatajudRegistro.objects.all().delete()
+        except Exception:
+            logger.exception("Falha ao limpar a tabela %s", tabela)
+            raise
 
         self.stdout.write(
             self.style.SUCCESS(f"Registros do Datajud removidos: {removidos}.")
         )
+        logger.warning("Limpeza concluída da tabela %s: %s", tabela, removidos)

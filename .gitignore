@@ -9,6 +9,10 @@ __pycache__/
 # Credenciais — NUNCA subir
 .env
 
+# Logs locais — não versionar
+logs/*.log
+!logs/.gitkeep
+
 # Dados — não versionar o conteúdo, só manter a estrutura de pastas
 data/raw/*
 data/interim/*
