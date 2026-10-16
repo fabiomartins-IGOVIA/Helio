@@ -156,17 +156,52 @@ O modelo `IBGE` está mantido como placeholder abstrato, sem campos, até que os
 indicadores do IBGE sejam definidos. A coleta das duas APIs será feita pelos
 notebooks, sem uma tabela de controle de cargas no backend.
 
+As colunas `codigo_classe`, `nome_classe`, `codigo_assunto` e `nome_assunto`
+são armazenadas como listas em campos `JSONField`. Isso preserva a estrutura
+original do Parquet, que contém listas de códigos e nomes, e permite que a API
+retorne esses valores como arrays JSON.
+
 ### Carga do Parquet do Datajud
 
-O notebook histórico produz este arquivo, sem sobrescrever o Parquet atual:
+O notebook histórico produz um arquivo Parquet independente para cada ano:
 
 ```text
-data/processed/datajud/tabela_principal_helios_2000_2024.parquet
+data/processed/datajud/tabela_principal_helios_2009.parquet
+data/processed/datajud/tabela_principal_helios_2010.parquet
+...
+data/processed/datajud/tabela_principal_helios_2024.parquet
 ```
 
 O arquivo `data/processed/datajud/tabela_principal_helios.parquet` já existente
-contém os dados de 2025 e 2026. Sem `--arquivo`, o comando importa os dois
-arquivos em ordem cronológica.
+contém os dados de 2025 e 2026. Sem `--arquivo`, o comando localiza os arquivos
+anuais, importa-os em ordem crescente e processa esse arquivo atual por último.
+
+Cada ano deve ser coletado e consolidado separadamente. Os arquivos brutos e os
+checkpoints ficam em `data/raw/datajud/ANO/`; o notebook pode ser reiniciado e
+retomará a coleta a partir do checkpoint daquele ano. O notebook de teste usa a
+pasta `data/raw/datajud_teste/ANO/` e grava o Parquet de teste em
+`data/processed/datajud/teste/`.
+
+O fluxo recomendado para uma carga incremental é:
+
+1. Coletar e consolidar um ano no notebook.
+2. Validar o arquivo com `--dry-run`.
+3. Importar somente o Parquet daquele ano.
+4. Repetir o processo para o ano seguinte.
+
+```bash
+python manage.py importar_datajud --dry-run
+python manage.py importar_datajud --arquivo "data/processed/datajud/tabela_principal_helios_2009.parquet"
+```
+
+O importador é incremental e adiciona registros; ele não identifica
+automaticamente se um arquivo já foi carregado e não remove duplicidades. Por
+isso, não se deve importar novamente um mesmo ano sem antes limpá-lo:
+
+```bash
+python manage.py limpar_datajud --ano 2009 --confirmar
+python manage.py importar_datajud --arquivo "data/processed/datajud/tabela_principal_helios_2009.parquet"
+```
 
 Os dados não são versionados pelo Git. Os comandos de carga ficam em
 `core/management/commands/` e usam a configuração de banco do Django.
@@ -189,7 +224,8 @@ Importar somente uma quantidade específica de linhas:
 python manage.py importar_datajud 500000
 ```
 
-Sem esse argumento, o comando importa todas as linhas dos dois arquivos padrão.
+Sem esse argumento, o comando importa todas as linhas dos Parquets anuais
+encontrados e, se existir, do arquivo atual de 2025–2026.
 
 Também é possível informar um ou mais caminhos manualmente, repetindo `--arquivo`:
 
@@ -197,16 +233,25 @@ Também é possível informar um ou mais caminhos manualmente, repetindo `--arqu
 python manage.py importar_datajud --arquivo "C:/caminho/arquivo_1.parquet" --arquivo "C:/caminho/arquivo_2.parquet"
 ```
 
-Para substituir completamente a carga atual durante a importação:
+Para apagar todos os registros antes de uma carga completa:
 
 ```bash
 python manage.py importar_datajud --limpar-antes
 ```
 
+Esse parâmetro remove todos os registros atuais antes de importar os Parquets
+encontrados. Use-o somente quando a intenção for reconstruir toda a tabela.
+
 Para limpar o banco separadamente, é necessário confirmar explicitamente:
 
 ```bash
 python manage.py limpar_datajud --confirmar
+```
+
+Para limpar somente um ano:
+
+```bash
+python manage.py limpar_datajud --ano 2009 --confirmar
 ```
 
 ## Fluxo de trabalho (colaboração)

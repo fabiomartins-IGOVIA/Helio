@@ -4,6 +4,19 @@ from .models import DatajudRegistro
 
 
 class DatajudRegistroSerializer(serializers.ModelSerializer):
+    codigo_classe = serializers.ListField(
+        child=serializers.IntegerField(), required=False, allow_empty=True
+    )
+    nome_classe = serializers.ListField(
+        child=serializers.CharField(allow_blank=True), required=False, allow_empty=True
+    )
+    codigo_assunto = serializers.ListField(
+        child=serializers.IntegerField(), required=False, allow_empty=True
+    )
+    nome_assunto = serializers.ListField(
+        child=serializers.CharField(allow_blank=True), required=False, allow_empty=True
+    )
+
     class Meta:
         model = DatajudRegistro
         fields = (

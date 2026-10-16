@@ -17,14 +17,26 @@ class DatajudRegistro(models.Model):
         help_text="Código do município no padrão IBGE, com até 7 dígitos.",
     )
     municipio = models.CharField(max_length=27)
-    codigo_classe = models.TextField(
-        help_text="Lista de códigos serializada, por exemplo: [198,460].",
+    codigo_classe = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Lista de códigos numéricos da classe processual.",
     )
-    nome_classe = models.CharField(max_length=310)
-    codigo_assunto = models.TextField(
-        help_text="Lista de códigos serializada no arquivo.",
+    nome_classe = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Lista de nomes das classes processuais.",
     )
-    nome_assunto = models.TextField(blank=True)
+    codigo_assunto = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Lista de códigos numéricos dos assuntos.",
+    )
+    nome_assunto = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Lista de nomes dos assuntos.",
+    )
     codigo_orgao = models.CharField(max_length=5)
     nome_orgao = models.CharField(max_length=155)
 

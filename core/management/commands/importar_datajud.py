@@ -1,4 +1,7 @@
+import ast
+import json
 import logging
+import re
 from pathlib import Path
 
 from django.conf import settings
@@ -27,9 +30,47 @@ COLUNAS_OBRIGATORIAS = {
 
 
 def texto(valor) -> str:
-    """Converte valores do Arrow para texto sem transformar nulos em 'None'."""
+    """Converte valores escalares do Arrow para texto sem produzir 'None'."""
 
     return "" if valor is None else str(valor)
+
+
+def lista(valor, numerico=False):
+    """Normaliza listas do Parquet e listas serializadas de arquivos antigos."""
+
+    if valor is None:
+        valores = []
+    elif isinstance(valor, (list, tuple)):
+        valores = list(valor)
+    elif isinstance(valor, str):
+        bruto = valor.strip()
+        if not bruto:
+            valores = []
+        else:
+            try:
+                valores = json.loads(bruto)
+            except json.JSONDecodeError:
+                try:
+                    valores = ast.literal_eval(bruto)
+                except (ValueError, SyntaxError):
+                    valores = [bruto]
+            if not isinstance(valores, list):
+                valores = [valores]
+    else:
+        valores = [valor]
+
+    resultado = []
+    for item in valores:
+        if item is None or (isinstance(item, str) and not item.strip()):
+            continue
+        if numerico:
+            try:
+                resultado.append(int(item))
+                continue
+            except (TypeError, ValueError):
+                pass
+        resultado.append(str(item).strip())
+    return resultado
 
 
 class Command(BaseCommand):
@@ -38,10 +79,17 @@ class Command(BaseCommand):
     @staticmethod
     def arquivos_padrao():
         pasta = Path(settings.BASE_DIR) / "data" / "processed" / "datajud"
-        return [
-            pasta / "tabela_principal_helios_2000_2024.parquet",
-            pasta / "tabela_principal_helios.parquet",
+        arquivos_anuais = [
+            arquivo
+            for arquivo in pasta.glob("tabela_principal_helios_*.parquet")
+            if re.fullmatch(r"tabela_principal_helios_\d{4}\.parquet", arquivo.name)
         ]
+        arquivos_anuais.sort(key=lambda arquivo: int(arquivo.stem.rsplit("_", 1)[-1]))
+
+        arquivo_atual = pasta / "tabela_principal_helios.parquet"
+        if arquivo_atual.is_file():
+            arquivos_anuais.append(arquivo_atual)
+        return arquivos_anuais
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -58,7 +106,8 @@ class Command(BaseCommand):
             action="append",
             help=(
                 "Caminho de um arquivo Parquet. Pode ser repetido para vários arquivos. "
-                "Sem este argumento, usa os dois arquivos padrão de data/processed/datajud/."
+                "Sem este argumento, usa os Parquets anuais em ordem crescente e, por último, "
+                "o arquivo atual tabela_principal_helios.parquet."
             ),
         )
         parser.add_argument(
@@ -203,10 +252,10 @@ class Command(BaseCommand):
                             processo=texto(row["processo"]),
                             id_municipio=texto(row["id_municipio"]),
                             municipio=texto(row["municipio"]),
-                            codigo_classe=texto(row["codigo_classe"]),
-                            nome_classe=texto(row["nome_classe"]),
-                            codigo_assunto=texto(row["codigo_assunto"]),
-                            nome_assunto=texto(row["nome_assunto"]),
+                            codigo_classe=lista(row["codigo_classe"], numerico=True),
+                            nome_classe=lista(row["nome_classe"]),
+                            codigo_assunto=lista(row["codigo_assunto"], numerico=True),
+                            nome_assunto=lista(row["nome_assunto"]),
                             codigo_orgao=texto(row["codigo_orgao"]),
                             nome_orgao=texto(row["nome_orgao"]),
                         )
