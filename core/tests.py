@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -27,6 +28,10 @@ class BackendSmokeTests(TestCase):
         response = self.client.get("/api/health/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "ok")
+
+    def test_static_root_is_configured(self):
+        self.assertEqual(settings.STATIC_URL, "/static/")
+        self.assertEqual(settings.STATIC_ROOT.name, "staticfiles")
 
     def test_dashboard_is_home_and_public(self):
         response = self.client.get("/")

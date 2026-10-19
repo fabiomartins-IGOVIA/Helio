@@ -13,6 +13,9 @@ __pycache__/
 logs/*.log
 !logs/.gitkeep
 
+# Arquivos estáticos gerados pelo collectstatic
+staticfiles/
+
 # Dados — não versionar o conteúdo, só manter a estrutura de pastas
 data/raw/*
 data/interim/*
