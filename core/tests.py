@@ -33,6 +33,11 @@ class BackendSmokeTests(TestCase):
         self.assertEqual(settings.STATIC_URL, "/static/")
         self.assertEqual(settings.STATIC_ROOT.name, "staticfiles")
 
+    def test_production_security_settings_are_available(self):
+        self.assertIsInstance(settings.ALLOWED_HOSTS, list)
+        self.assertIsInstance(settings.CSRF_TRUSTED_ORIGINS, list)
+        self.assertEqual(settings.SECURE_PROXY_SSL_HEADER, ("HTTP_X_FORWARDED_PROTO", "https"))
+
     def test_dashboard_is_home_and_public(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
