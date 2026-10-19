@@ -23,29 +23,13 @@ def health_check(request):
         summary="Lista registros do Datajud",
         description="Retorna registros do Datajud.",
     ),
-    create=extend_schema(
-        tags=["Datajud"],
-        summary="Cria um registro do Datajud",
-    ),
     retrieve=extend_schema(
         tags=["Datajud"],
         summary="Consulta um registro do Datajud",
     ),
-    update=extend_schema(
-        tags=["Datajud"],
-        summary="Atualiza completamente um registro do Datajud",
-    ),
-    partial_update=extend_schema(
-        tags=["Datajud"],
-        summary="Atualiza parcialmente um registro do Datajud",
-    ),
-    destroy=extend_schema(
-        tags=["Datajud"],
-        summary="Exclui um registro do Datajud",
-    ),
 )
-class DatajudRegistroViewSet(viewsets.ModelViewSet):
-    """CRUD público dos registros do Datajud."""
+class DatajudRegistroViewSet(viewsets.ReadOnlyModelViewSet):
+    """Consulta pública e somente leitura dos registros do Datajud."""
 
     queryset = DatajudRegistro.objects.all()
     serializer_class = DatajudRegistroSerializer
