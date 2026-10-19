@@ -18,6 +18,10 @@ data/raw/*
 data/interim/*
 data/processed/*
 !data/**/.gitkeep
+# Dicionário público usado pela pipeline do Datajud
+!data/raw/
+!data/raw/ibge/
+!data/raw/ibge/municipios_bahia.csv
 *.sqlite3
 
 # Sistema / editor
