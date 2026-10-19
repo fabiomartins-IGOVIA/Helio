@@ -28,10 +28,13 @@ class BackendSmokeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "ok")
 
-    def test_dashboard_is_public(self):
-        response = self.client.get("/admin/")
+    def test_dashboard_is_home_and_public(self):
+        response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Visão geral dos dados")
+
+        legacy_response = self.client.get("/admin/")
+        self.assertRedirects(legacy_response, "/")
 
     def test_datajud_endpoint_is_public(self):
         response = self.client.get("/api/datajud-registros/")
